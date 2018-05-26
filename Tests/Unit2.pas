@@ -22,16 +22,20 @@ procedure TMyTestObject.Test1;
 var
   MultiLog:TAGLog;
   Stream:TStream;
-  s:string;
+  s:TBytes;
 begin
 MultiLog:=TAGMultiLog.Create(nil);
 (MultiLog as TAGMultiLog).Logs.Add(TAGNullLog.Create());
 (MultiLog as TAGMultiLog).Logs.Add(TAGDiskLog.Create('test.log'));
 (MultiLog as TAGMultiLog).Logs.Add(TAGRamLog.Create());
 //(MultiLog as TAGMultiLog).Logs.Add(TAGCommandLineLog.Create(GetStdHandle()));
-s:=TFile.ReadAllText('test2.log');
+try
+  s:=TFile.ReadAllBytes('test2.log');
+except
+  s:=TBytes.Create();
+end;
 Stream:=TFileStream.Create('test2.log',fmCreate+fmOpenReadWrite+fmShareDenyWrite);
-Stream.Write(PWidechar(s)^,2*length(s));
+Stream.WriteBuffer(s,length(s));
 (MultiLog as TAGMultiLog).Logs.Add(TAGStreamLog.Create(Stream));
 //(MultiLog as TAGMultiLog).Logs.Add(TAGCallBackLog.Create());
 MultiLog.Write('aaaaaaaaaaa',self);

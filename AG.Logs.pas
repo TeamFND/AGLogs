@@ -25,7 +25,8 @@ type
       class function GenerateLogString(s:widestring;o:TObject=nil):widestring;static;inline;
       procedure Tab();virtual;
       procedure UnTab();virtual;
-      procedure Write(Text:WideString;o:TObject=nil);virtual;abstract;
+      procedure Write(Text:WideString;o:TObject=nil);overload;virtual;abstract;
+      procedure Write(const data);overload;virtual;abstract;
       destructor Destroy();override;
   end;
 
