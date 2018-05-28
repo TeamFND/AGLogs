@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectSession>
+    <PathDelim Value="\"/>
+    <Version Value="10"/>
+    <BuildModes Active="Default"/>
+    <Units Count="6">
+      <Unit0>
+        <Filename Value="fpcunitproject1.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <WindowIndex Value="-1"/>
+        <TopLine Value="-1"/>
+        <CursorPos X="-1" Y="-1"/>
+        <UsageCount Value="20"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="testcase1.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="TestCase1"/>
+        <CursorPos X="98" Y="24"/>
+        <UsageCount Value="20"/>
+        <Loaded Value="True"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="..\AG.Logs.pas"/>
+        <IsPartOfProject Value="True"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="1"/>
+        <CursorPos X="89" Y="25"/>
+        <UsageCount Value="20"/>
+        <Loaded Value="True"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="C:\lazarus\fpc\3.0.4\source\rtl\win\wininc\redef.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="14"/>
+        <CursorPos X="29" Y="30"/>
+        <UsageCount Value="10"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="C:\lazarus\fpc\3.0.4\source\rtl\win\wininc\base.inc"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="636"/>
+        <CursorPos X="6" Y="652"/>
+        <UsageCount Value="10"/>
+      </Unit4>
+      <Unit5>
+        <Filename Value="C:\lazarus\packager\registration\fcllaz.pas"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="3" Y="11"/>
+        <UsageCount Value="10"/>
+      </Unit5>
+    </Units>
+    <JumpHistory Count="8" HistoryIndex="7">
+      <Position1>
+        <Filename Value="testcase1.pas"/>
+        <Caret Line="31" Column="6" TopLine="15"/>
+      </Position1>
+      <Position2>
+        <Filename Value="testcase1.pas"/>
+        <Caret Line="31" Column="6" TopLine="15"/>
+      </Position2>
+      <Position3>
+        <Filename Value="testcase1.pas"/>
+        <Caret Line="33" Column="20" TopLine="17"/>
+      </Position3>
+      <Position4>
+        <Filename Value="..\AG.Logs.pas"/>
+        <Caret Line="25" Column="89"/>
+      </Position4>
+      <Position5>
+        <Filename Value="testcase1.pas"/>
+        <Caret Line="31" Column="5" TopLine="15"/>
+      </Position5>
+      <Position6>
+        <Filename Value="testcase1.pas"/>
+        <Caret Line="38" Column="2" TopLine="21"/>
+      </Position6>
+      <Position7>
+        <Filename Value="testcase1.pas"/>
+        <Caret Line="12" Column="50"/>
+      </Position7>
+      <Position8>
+        <Filename Value="testcase1.pas"/>
+        <Caret Line="24" Column="98"/>
+      </Position8>
+    </JumpHistory>
+  </ProjectSession>
+</CONFIG>

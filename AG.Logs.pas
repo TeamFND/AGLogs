@@ -2,31 +2,31 @@ unit AG.Logs;
 
 interface
 
-//{$UNDEF MSWINDOWS}
-
 uses
   {$IFDEF MSWINDOWS}{$IFDEF FPC}Windows{$ELSE}Winapi.Windows{$ENDIF},{$ENDIF}
-  {$IFDEF FPC}FGL{$ELSE}System.Generics.Collections,{$ENDIF}
-  {$IFDEF FPC}System.SysUtils{$ELSE}SysUtils{$ENDIF},
-  {$IFDEF FPC}System.Classes{$ELSE}Classes{$ENDIF},
-  {$IFDEF FPC}System.DateUtils{$ELSE}DateUtils{$ENDIF},
-  {$IFDEF FPC}System.SyncObjs{$ELSE}SyncObjs{$ENDIF};
+  {$IFDEF FPC}FGL{$ELSE}System.Generics.Collections{$ENDIF},
+  {$IFDEF FPC}SysUtils{$ELSE}System.SysUtils{$ENDIF},
+  {$IFDEF FPC}Classes{$ELSE}System.Classes{$ENDIF},
+  {$IFDEF FPC}DateUtils{$ELSE}System.DateUtils{$ENDIF},
+  {$IFDEF FPC}SyncObjs{$ELSE}System.SyncObjs{$ENDIF}
+  {$IFNDEF MSWINDOWS},
+    {$IFNDEF FPC}System.IOUtils{$ENDIF}
+  {$ENDIF};
 
 type
   TAGLog=class abstract
     strict protected
       tabs:cardinal;
-      tabstr:widestring;
+      tabstr:string;
       constructor Create();
     const
       CBaseTab='--------------------------';  
     public
-      class function SisebleWordtoStr(i:word;size:int8):widestring;static;inline;
-      class function GenerateLogString(s:widestring;o:TObject=nil):widestring;static;inline;
+      class function SisebleWordtoStr(i:word;size:int8):string;static;inline;
+      class function GenerateLogString(s:string;o:TObject=nil):string;static;inline;
       procedure Tab();virtual;
       procedure UnTab();virtual;
-      procedure Write(Text:WideString;o:TObject=nil);overload;virtual;abstract;
-      procedure Write(const data);overload;virtual;abstract;
+      procedure Write(Text:string;o:TObject=nil);overload;virtual;abstract;
       destructor Destroy();override;
   end;
 
@@ -34,28 +34,34 @@ type
     public
       buf:WideString;
       constructor Create();overload;
-      procedure Write(Text:WideString;o:TObject=nil);overload;override;
+      procedure Write(Text:string;o:TObject=nil);overload;override;
   end;
 
   TAGDiskLog=class(TAGLog)
     strict protected
-      LogHandle,ThreadHandle:NativeUInt;
-      ThreadID:cardinal;
+      {$IFNDEF MSWINDOWS}
+      Stream:TStream;
+      {$ELSE}
       buf1:WideString;
       onbuf:boolean;
+      LogHandle,ThreadHandle:NativeUInt;
+      ThreadID:cardinal;
       Lock:TCriticalSection;
       WantTerminate:Boolean;
+      {$ENDIF}
     public
       constructor Create(FileName:WideString);overload;
-      procedure Init();{override;}stdcall;
-      procedure Write(Text:WideString;o:TObject=nil);overload;override;
+      {$IFDEF MSWINDOWS}
+      procedure Init();stdcall;
+      {$ENDIF}
+      procedure Write(Text:string;o:TObject=nil);overload;override;
       destructor Destroy();overload;override;
   end;
 
   TAGNullLog=class(TAGLog)
     public
       constructor Create();overload;
-      procedure Write(Text:WideString;o:TObject=nil);overload;override;
+      procedure Write(Text:string;o:TObject=nil);overload;override;
   end;
 
   {$IFDEF MSWINDOWS}
@@ -64,7 +70,7 @@ type
       CommandLine:THandle;
     public
       constructor Create(Handele:THandle);overload;
-      procedure Write(Text:WideString;o:TObject=nil);overload;override;
+      procedure Write(Text:string;o:TObject=nil);overload;override;
       destructor Destroy();overload;override;
   end;
   {$ENDIF}
@@ -73,46 +79,43 @@ type
     strict protected
       stream:TStream;
     public
-      constructor Create(stream:TStream);overload;
-      procedure Write(Text:WideString;o:TObject=nil);overload;override;
+      constructor Create(Astream:TStream);overload;
+      procedure Write(Text:string;o:TObject=nil);overload;override;
   end;
 
   TAGCallBackLog=class(TAGLog)
     strict protected type
-      TCallBack=procedure(s:string);
+      TCallBack={$IFNDEF FPC}reference to{$ENDIF}procedure(s:string);
       var
         CallBack:TCallBack;
     public
-      constructor Create(CallBack:TCallBack);overload;
-      procedure Write(Text:WideString;o:TObject=nil);overload;override;
+      constructor Create(ACallBack:TCallBack);overload;
+      procedure Write(Text:string;o:TObject=nil);overload;override;
   end;
 
   TAGMultiLog=class(TAGLog)
     public
       type
-        TLogsList=TList<TAGLog>;
+        TLogsList={$IFDEF FPC}specialize TFPGList<TAGLog>{$ELSE}TList<TAGLog>{$ENDIF};
       var
         Logs:TLogsList;
       constructor Create(Default:TLogsList);overload;
-      procedure Write(Text:WideString;o:TObject=nil);overload;override;
+      procedure Write(Text:string;o:TObject=nil);overload;override;
       procedure Tab();override;
       procedure UnTab();override;
       destructor Destroy();overload;override;
   end;
-
-const 
-  SisebleWordtoStr:function(i:word;size:int8):widestring=TAGLog.SisebleWordtoStr;
   
 Implementation
 
 constructor TAGLog.Create();
 begin
-Self.Write(sLineBreak+CBaseTab+'Logging init'+CBaseTab+sLineBreak);
-end;                  
+Self.Write(CBaseTab+'Logging init-'+CBaseTab);
+end;
 
-class function TAGLog.SisebleWordtoStr(i:word;size:int8):widestring;
+class function TAGLog.SisebleWordtoStr(i:word;size:int8):string;
 begin
-  Result:=inttostr(i);
+  Result:=IntToStr(i);
   size:=size-Length(Result);
   case size of
   0:Result:=Result;
@@ -123,19 +126,23 @@ begin
   end;
 end;
 
-class function TAGLog.GenerateLogString(s:widestring;o:TObject=nil):widestring;
+class function TAGLog.GenerateLogString(s:string;o:TObject=nil):string;
 var
   D:TDateTime;
 begin
 D:=Time;
 if o<>nil then
-  Result:=o.QualifiedClassName+'['+IntToStr(o.GetHashCode)+']:'
+  {$IFDEF FPC}
+    Result:=o.ClassName+'['+IntToStr(o.GetHashCode)+']:'
+  {$ELSE}
+    Result:=o.QualifiedClassName+'['+IntToStr(o.GetHashCode)+']:'
+  {$ENDIF}
 else
   Result:='';
 Result:='['+Siseblewordtostr(DayOfTheMonth(D),2)+'.'+Siseblewordtostr(MonthOfTheYear(D),2)+'.'+
   Siseblewordtostr(YearOf(D),4)+' '+Siseblewordtostr(HourOfTheDay(D),2)+':'+
   Siseblewordtostr(MinuteOfTheHour(D),2)+':'+Siseblewordtostr(SecondOfTheMinute(D),2)+'.'
-  +Siseblewordtostr(MilliSecondOfTheSecond(D),3)+'] '+Result+s+#13#10;
+  +Siseblewordtostr(MilliSecondOfTheSecond(D),3)+'] '+Result+s+sLineBreak;
 end;
 
 procedure TAGLog.Tab();
@@ -152,7 +159,7 @@ end;
 
 destructor TAGLog.Destroy();
 begin
-Self.Write(sLineBreak+CBaseTab+'Logging ended'+CBaseTab+sLineBreak);
+Self.Write(CBaseTab+'Logging ended'+CBaseTab);
 inherited;
 end;
 
@@ -164,14 +171,14 @@ tabstr:='';
 inherited Create;
 end;
 
-procedure TAGRamLog.Write(Text:WideString;o:TObject=nil);
+procedure TAGRamLog.Write(Text:string;o:TObject=nil);
 begin
 buf:=buf+GenerateLogString(tabstr+Text,o);
 end;
 
 constructor TAGDiskLog.Create(FileName:WideString);
+{$IFDEF MSWINDOWS}
 begin
-{}
 Lock:=TCriticalSection.Create;
 WantTerminate:=False;
 tabs:=0;
@@ -179,11 +186,23 @@ tabstr:='';
 buf1:='';
 LogHandle:=CreateFileW(Pwidechar(FileName),GENERIC_WRITE,0,nil,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,0);
 SetFilePointer(LogHandle,0,nil,FILE_END);
-ThreadHandle:=CreateThread(nil,0,addr(TAGDiskLog.Init),self,0,ThreadID);
+ThreadHandle:=CreateThread(nil,0,{$IFDEF FPC}Self.MethodAddress('Init'){$ELSE}addr(TAGDiskLog.Init){$ENDIF},self,0,ThreadID);
+{$ELSE}
+var
+  s:TBytes;
+begin
+try
+  s:=TFile.ReadAllBytes(FileName);
+except
+  s:=TBytes.Create();
+end;
+Stream:=TFileStream.Create(FileName,fmCreate+fmOpenReadWrite+fmShareDenyWrite);
+Stream.WriteBuffer(s,length(s));
+{$ENDIF}
 inherited Create;
-{}
 end;
 
+{$IFDEF MSWINDOWS}
 procedure TAGDiskLog.Init();stdcall;
 var
   n:cardinal;
@@ -215,17 +234,27 @@ begin
   sleep(0);
 end;
 end;
+{$ENDIF}
 
-procedure TAGDiskLog.Write(Text:WideString;o:TObject=nil);
+procedure TAGDiskLog.Write(Text:string;o:TObject=nil);
+{$IFDEF MSWINDOWS}
 begin
 Lock.Enter;
 buf1:=buf1+GenerateLogString(tabstr+text,o);
 Lock.Leave;
+{$ELSE}
+var
+  s:string;
+begin
+s:=GenerateLogString(tabstr+text,o);
+Stream.WriteData(PWideChar(s),Length(s)*2);
+{$ENDIF}
 end;
 
 destructor TAGDiskLog.Destroy();
 begin
 inherited;
+{$IFDEF MSWINDOWS}
 WantTerminate:=True;
 While WantTerminate do
   sleep(0);
@@ -233,6 +262,9 @@ FreeAndNil(Lock);
 TerminateThread(ThreadID,0);
 CloseHandle(ThreadHandle);
 CloseHandle(LogHandle);
+{$ELSE}
+FreeAndNil(Stream);
+{$ENDIF}
 end;
 
 constructor TAGNullLog.Create();
@@ -240,7 +272,7 @@ begin
 inherited;
 end;
 
-procedure TAGNullLog.Write(Text:WideString;o:TObject=nil);
+procedure TAGNullLog.Write(Text:string;o:TObject=nil);
 begin
 end;
 
@@ -253,7 +285,7 @@ CommandLine:=Handele;
 inherited Create;
 end;
 
-procedure TAGCommandLineLog.Write(Text:WideString;o:TObject=nil); 
+procedure TAGCommandLineLog.Write(Text:string;o:TObject=nil);
 var
   p:PWideChar;
   a,b:cardinal;   
@@ -279,13 +311,13 @@ end;
 
 {TAGStreamLog}
 
-constructor TAGStreamLog.Create(stream:TStream);
+constructor TAGStreamLog.Create(Astream:TStream);
 begin
-Self.stream:=stream;
+stream:=Astream;
 inherited Create;
 end;
 
-procedure TAGStreamLog.Write(Text:WideString;o:TObject=nil);
+procedure TAGStreamLog.Write(Text:string;o:TObject=nil);
 var
   s:string;
 begin
@@ -295,33 +327,33 @@ end;
 
 {TAGCallBackLog}
 
-constructor TAGCallBackLog.Create(CallBack:TCallBack);
+constructor TAGCallBackLog.Create(ACallBack:TCallBack);
 begin
-Self.CallBack:=CallBack;
+CallBack:=ACallBack;
 inherited Create;
 end;
 
-procedure TAGCallBackLog.Write(Text:WideString;o:TObject=nil);
+procedure TAGCallBackLog.Write(Text:string;o:TObject=nil);
 begin
 CallBack(GenerateLogString(Text,o));
 end;
 
 {TAGMultiLog}
 
-constructor TAGMultiLog.Create(Default:TList<TAGLog>);
+constructor TAGMultiLog.Create(Default:TLogsList);
 begin
 //inherited Create;
 if Default<>nil then
   Logs:=Default
 else
-  Logs:=TList<TAGLog>.Create;
+  Logs:=TLogsList.Create;
 end;
 
-procedure TAGMultiLog.Write(Text:WideString;o:TObject=nil);
+procedure TAGMultiLog.Write(Text:string;o:TObject=nil);
 var
   i:TAGLog;
 begin
-for i in Logs.List do
+for i in Logs do
   i.Write(Text,o);
 end;
 
@@ -329,7 +361,7 @@ procedure TAGMultiLog.Tab();
 var
   i:TAGLog;
 begin
-for i in Logs.List do
+for i in Logs do
   i.Tab();
 end;
 
@@ -337,7 +369,7 @@ procedure TAGMultiLog.UnTab();
 var
   i:TAGLog;
 begin
-for i in Logs.List do
+for i in Logs do
   i.UnTab();
 end;
 
@@ -345,7 +377,7 @@ destructor TAGMultiLog.Destroy();
 var
   i:TAGLog;
 begin
-for i in Logs.List do
+for i in Logs do
   i.Free();
 FreeAndNil(Logs);
 //inherited;
