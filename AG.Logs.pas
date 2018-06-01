@@ -18,9 +18,12 @@ uses
 type
   TAGLog=class abstract
     strict protected
+      OneTabStr:string;
       tabs:cardinal;
       tabstr:string;
       constructor Create();
+      procedure TabRegen();
+      procedure SetTabText(const s:string);virtual;
     const
       CBaseTab='--------------------------';  
     public
@@ -30,6 +33,7 @@ type
       procedure UnTab();virtual;
       procedure Write(const Text:string;o:TObject=nil);overload;virtual;abstract;
       destructor Destroy();override;
+      property TabText:string read OneTabStr write SetTabText;
   end;
 
   TAGRamLog=class(TAGLog)
@@ -96,6 +100,8 @@ type
   end;
 
   TAGMultiLog=class(TAGLog)
+    strict protected
+      procedure SetTabText(const s:string);override;
     public
       type
         TLogsList={$IFDEF FPC}specialize TFPGList<TAGLog>{$ELSE}TList<TAGLog>{$ENDIF};
@@ -110,12 +116,15 @@ type
 
 const
   CharSize=SizeOf(char);//{$IFDEF FPC}1{$ELSE}2{$ENDIF};
+  DefOneTabStr='  ';
   
 Implementation
 
 constructor TAGLog.Create();
 begin
 Self.Write(CBaseTab+'Logging init-'+CBaseTab);
+TabRegen;
+OneTabStr:=DefOneTabStr;
 end;
 
 class function TAGLog.SizeableWordtoStr(i:word;size:int8):string;
@@ -162,6 +171,21 @@ if tabs=0 then
   Exit;
 dec(tabs);
 Delete(tabstr,1,2);
+end;
+
+procedure TAGLog.TabRegen();
+var
+  i:cardinal;
+begin
+tabstr:='';
+for i:=1 to tabs do
+  tabstr:=tabstr+OneTabStr;
+end;
+
+procedure TAGLog.SetTabText(const s:string);
+begin
+OneTabStr:=s;
+TabRegen;
 end;
 
 destructor TAGLog.Destroy();
@@ -365,6 +389,14 @@ CallBack(GenerateLogString(Text,o));
 end;
 
 {TAGMultiLog}
+
+procedure TAGMultiLog.SetTabText(const s:string);
+var
+  i:TAGLog;
+begin
+for i in Logs do
+  i.TabText:=s;
+end;
 
 constructor TAGMultiLog.Create(Default:TLogsList);
 begin
