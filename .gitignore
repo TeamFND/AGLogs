@@ -75,7 +75,9 @@ backup/
 *.ppu
 *.o
 *.or
-FPCTests/*.ico
+FPCTest/*.ico
+FPCTest/test.log
+FPCTest/test2.log
 *.ini
 
 Tests/Win32

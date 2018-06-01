@@ -2,6 +2,10 @@ unit AG.Logs;
 
 interface
 
+{$IFDEF FPC}
+  {$UNDEF MSWINDOWS}
+{$ENDIF}
+
 uses
   {$IFDEF MSWINDOWS}{$IFDEF FPC}Windows{$ELSE}Winapi.Windows{$ENDIF},{$ENDIF}
   {$IFDEF FPC}FGL{$ELSE}System.Generics.Collections{$ENDIF},
@@ -9,9 +13,7 @@ uses
   {$IFDEF FPC}Classes{$ELSE}System.Classes{$ENDIF},
   {$IFDEF FPC}DateUtils{$ELSE}System.DateUtils{$ENDIF},
   {$IFDEF FPC}SyncObjs{$ELSE}System.SyncObjs{$ENDIF}
-  {$IFNDEF MSWINDOWS},
-    {$IFNDEF FPC}System.IOUtils{$ENDIF}
-  {$ENDIF};
+  {$IFNDEF MSWINDOWS}{$IFNDEF FPC},System.IOUtils{$ENDIF}{$ENDIF};
 
 type
   TAGLog=class abstract
@@ -40,7 +42,7 @@ type
   TAGDiskLog=class(TAGLog)
     strict protected
       {$IFNDEF MSWINDOWS}
-      Stream:TStream;
+      Stream:TFileStream;//TStream;
       {$ELSE}
       buf1:WideString;
       onbuf:boolean;
@@ -105,6 +107,9 @@ type
       procedure UnTab();override;
       destructor Destroy();overload;override;
   end;
+
+const
+  CharSize=SizeOf(char);//{$IFDEF FPC}1{$ELSE}2{$ENDIF};
   
 Implementation
 
@@ -179,25 +184,38 @@ end;
 constructor TAGDiskLog.Create(FileName:WideString);
 {$IFDEF MSWINDOWS}
 begin
-Lock:=TCriticalSection.Create;
-WantTerminate:=False;
-tabs:=0;
-tabstr:='';
-buf1:='';
-LogHandle:=CreateFileW(Pwidechar(FileName),GENERIC_WRITE,0,nil,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,0);
-SetFilePointer(LogHandle,0,nil,FILE_END);
-ThreadHandle:=CreateThread(nil,0,{$IFDEF FPC}Self.MethodAddress('Init'){$ELSE}addr(TAGDiskLog.Init){$ENDIF},self,0,ThreadID);
-{$ELSE}
+  Lock:=TCriticalSection.Create;
+  WantTerminate:=False;
+  tabs:=0;
+  tabstr:='';
+  buf1:='';
+  LogHandle:=CreateFileW(Pwidechar(FileName),GENERIC_WRITE,0,nil,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,0);
+  SetFilePointer(LogHandle,0,nil,FILE_END);
+  ThreadHandle:=CreateThread(nil,0,{$IFDEF FPC}Self.MethodAddress('Init'){$ELSE}addr(TAGDiskLog.Init){$ENDIF},self,0,ThreadID);
+{$ELSE}   
 var
   s:TBytes;
 begin
-try
-  s:=TFile.ReadAllBytes(FileName);
-except
-  s:=TBytes.Create();
-end;
-Stream:=TFileStream.Create(FileName,fmCreate+fmOpenReadWrite+fmShareDenyWrite);
-Stream.WriteBuffer(s,length(s));
+  {$IFDEF FPC}
+    Stream:=nil;
+    try
+      Stream:=TFileStream.Create('test2.log',fmOpenRead);
+      SetLength(s,Stream.Size);
+      Stream.Read(s[0],Stream.Size);
+    except
+      SetLength(s,0);
+    end;
+    FreeAndNil(Stream);
+  {$ELSE}
+    try
+      s:=TFile.ReadAllBytes(FileName);
+    except
+      s:=TBytes.Create();
+    end;
+  {$ENDIF}
+  Stream:=TFileStream.Create(FileName,fmCreate+fmOpenReadWrite+fmShareDenyWrite);
+  Stream.WriteBuffer(s[0],length(s));
+  SetLength(s,0);
 {$ENDIF}
 inherited Create;
 end;
@@ -206,16 +224,16 @@ end;
 procedure TAGDiskLog.Init();stdcall;
 var
   n:cardinal;
-  buf:PWideChar;
+  buf:PChar;
 begin
 buf:='';
 while Lock<>nil do
 begin
   Lock.Enter;
   if buf<>'' then
-    WriteFile(LogHandle,buf^,2*n,n,nil);
+    WriteFile(LogHandle,buf^,CharSize*n,n,nil);
   n:=Length(buf1);
-  buf:=Pwidechar(Copy(buf1,0,n));
+  buf:=PChar(Copy(buf1,0,n));
   buf1:='';
   Lock.Leave;
   if WantTerminate then
@@ -223,9 +241,9 @@ begin
     Sleep(0);
     Lock.Enter;
     if buf<>'' then
-      WriteFile(LogHandle,buf^,2*n,n,nil);
+      WriteFile(LogHandle,buf^,CharSize*n,n,nil);
     n:=Length(buf1);
-    buf:=Pwidechar(Copy(buf1,0,n));
+    buf:=PChar(Copy(buf1,0,n));
     buf1:='';
     Lock.Leave;
     WantTerminate:=False;
@@ -247,7 +265,11 @@ var
   s:string;
 begin
 s:=GenerateLogString(tabstr+text,o);
-Stream.WriteData(PWideChar(s),Length(s)*2);
+  {$IFDEF FPC}
+    Stream.Write(PChar(s)^,Length(s)*CharSize);
+  {$ELSE}
+    Stream.WriteData(PChar(s),Length(s)*CharSize);
+  {$ENDIF}
 {$ENDIF}
 end;
 
@@ -322,7 +344,7 @@ var
   s:string;
 begin
 s:=GenerateLogString(Text,o);
-stream.Write(PWideChar(s)^,2*length(s));
+stream.Write(PChar(s)^,CharSize*length(s));
 end;
 
 {TAGCallBackLog}

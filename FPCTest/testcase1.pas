@@ -26,15 +26,20 @@ MultiLog:=TAGMultiLog.Create(nil);
 (MultiLog as TAGMultiLog).Logs.Add(TAGNullLog.Create());
 (MultiLog as TAGMultiLog).Logs.Add(TAGDiskLog.Create('test.log'));
 (MultiLog as TAGMultiLog).Logs.Add(TAGRamLog.Create());
-{$IFNDEF MSWINDOWS}(MultiLog as TAGMultiLog).Logs.Add(TAGCommandLineLog.Create(GetStdHandle(STD_OUTPUT_HANDLE))){$ENDIF};
+{$IFNDEF MSWINDOWS}(MultiLog as TAGMultiLog).Logs.Add(TAGCommandLineLog.Create(GetStdHandle(STD_OUTPUT_HANDLE))){$ENDIF}; 
+Stream:=nil;
 try
-  //s:=TFile.ReadAllBytes('test2.log');
+  Stream:=TFileStream.Create('test2.log',fmOpenRead);  
+  SetLength(s,Stream.Size);
+  Stream.Read(s[0],Stream.Size);
 except
-  //s:=TBytes.Create();
+  SetLength(s,0);
 end;
+FreeAndNil(Stream);
 Stream:=TFileStream.Create('test2.log',fmCreate+fmOpenReadWrite+fmShareDenyWrite);
-Stream.WriteBuffer(s,length(s));
-(MultiLog as TAGMultiLog).Logs.Add(TAGStreamLog.Create(Stream));
+Stream.Write(s[0],Length(s));
+(MultiLog as TAGMultiLog).Logs.Add(TAGStreamLog.Create(Stream)); 
+SetLength(s,0);
 {(MultiLog as TAGMultiLog).Logs.Add(TAGCallBackLog.Create(procedure(s:string)
                                                          begin
                                                          Self.WriteLn(s);
