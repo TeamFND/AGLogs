@@ -1,4 +1,6 @@
 unit AG.Logs;
+//Copyright by Artem Gavrilov.
+//Site:https://teamfnd.ru
 
 interface
 
@@ -18,22 +20,22 @@ uses
 type
   TAGLog=class abstract
     strict protected
-      FTabText:string;
-      tabs:cardinal;
-      tabstr:string;
+      FIndentText:string;
+      Indents:cardinal;
+      IndentStr:string;
       constructor Create();
-      procedure TabRegen();
-      procedure SetTabText(const s:string);virtual;
+      procedure UpdateIndentStr();
+      procedure SetIndentText(const s:string);virtual;
     const
-      CBaseTab='--------------------------';  
+      CBaseIndent='--------------------------';
     public
       class function SizeableWordtoStr(i:word;size:int8):string;static;inline;
       class function GenerateLogString(const s:string;o:TObject=nil):string;static;inline;
-      procedure Tab();virtual;
-      procedure UnTab();virtual;
+      procedure Indent();virtual;
+      procedure UnIndent();virtual;
       procedure Write(const Text:string;o:TObject=nil);overload;virtual;abstract;
       destructor Destroy();override;
-      property TabText:string read FTabText write SetTabText;
+      property IndentText:string read FIndentText write SetIndentText;
   end;
 
   TAGRamLog=class(TAGLog)
@@ -101,7 +103,7 @@ type
 
   TAGMultiLog=class(TAGLog)
     strict protected
-      procedure SetTabText(const s:string);override;
+      procedure SetIndentText(const s:string);override;
     public
       type
         TLogsList={$IFDEF FPC}specialize TFPGList<TAGLog>{$ELSE}TList<TAGLog>{$ENDIF};
@@ -109,28 +111,30 @@ type
         Logs:TLogsList;
       constructor Create(Default:TLogsList);overload;
       procedure Write(const Text:string;o:TObject=nil);overload;override;
-      procedure Tab();override;
-      procedure UnTab();override;
+      procedure Indent();override;
+      procedure UnIndent();override;
       destructor Destroy();overload;override;
   end;
 
 const
-  CharSize=SizeOf(char);//{$IFDEF FPC}1{$ELSE}2{$ENDIF};
   DefOneTabStr='  ';
   
 Implementation
 
+const
+  CharSize=SizeOf(char);//{$IFDEF FPC}1{$ELSE}2{$ENDIF};
+
 constructor TAGLog.Create();
 begin
-Self.Write(CBaseTab+'Logging init-'+CBaseTab);
-TabRegen;
-FTabText:=DefOneTabStr;
+Self.Write(CBaseIndent+'Logging init-'+CBaseIndent);
+UpdateIndentStr;
+FIndentText:=DefOneTabStr;
 end;
 
 class function TAGLog.SizeableWordtoStr(i:word;size:int8):string;
 begin
   Result:=IntToStr(i);
-  size:=size-Length(Result);
+  dec(size,Length(Result));
   case size of
   0:Result:=Result;
   1:Result:='0'+Result;
@@ -159,52 +163,52 @@ Result:='['+SizeableWordtoStr(DayOfTheMonth(D),2)+'.'+SizeableWordtoStr(MonthOfT
   +SizeableWordtoStr(MilliSecondOfTheSecond(D),3)+'] '+Result+s+sLineBreak;
 end;
 
-procedure TAGLog.Tab();
+procedure TAGLog.Indent();
 begin
-inc(tabs);
-tabstr:=tabstr+'  ';
+inc(Indents);
+IndentStr:=IndentStr+FIndentText;
 end;
 
-procedure TAGLog.UnTab();
+procedure TAGLog.UnIndent();
 begin
-if tabs=0 then
+if Indents=0 then
   Exit;
-dec(tabs);
-Delete(tabstr,1,2);
+dec(Indents);
+Delete(IndentStr,1,length(FIndentText));
 end;
 
-procedure TAGLog.TabRegen();
+procedure TAGLog.UpdateIndentStr();
 var
   i:cardinal;
 begin
-tabstr:='';
-for i:=1 to tabs do
-  tabstr:=tabstr+FTabText;
+IndentStr:='';
+for i:=1 to Indents do
+  IndentStr:=IndentStr+FIndentText;
 end;
 
-procedure TAGLog.SetTabText(const s:string);
+procedure TAGLog.SetIndentText(const s:string);
 begin
-FTabText:=s;
-TabRegen;
+FIndentText:=s;
+UpdateIndentStr;
 end;
 
 destructor TAGLog.Destroy();
 begin
-Self.Write(CBaseTab+'Logging ended'+CBaseTab);
+Self.Write(CBaseIndent+'Logging ended'+CBaseIndent);
 inherited;
 end;
 
 constructor TAGRamLog.Create();
 begin
 buf:='';
-tabs:=0;
-tabstr:='';
+Indents:=0;
+IndentStr:='';
 inherited Create;
 end;
 
 procedure TAGRamLog.Write(const Text:string;o:TObject=nil);
 begin
-buf:=buf+GenerateLogString(tabstr+Text,o);
+buf:=buf+GenerateLogString(IndentStr+Text,o);
 end;
 
 constructor TAGDiskLog.Create(const FileName:String);
@@ -212,8 +216,8 @@ constructor TAGDiskLog.Create(const FileName:String);
 begin
   Lock:=TCriticalSection.Create;
   WantTerminate:=False;
-  tabs:=0;
-  tabstr:='';
+  Indents:=0;
+  IndentStr:='';
   buf1:='';
   LogHandle:=CreateFileW(Pwidechar(FileName),GENERIC_WRITE,0,nil,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,0);
   SetFilePointer(LogHandle,0,nil,FILE_END);
@@ -284,7 +288,7 @@ procedure TAGDiskLog.Write(const Text:string;o:TObject=nil);
 {$IF defined(MSWINDOWS) and not defined(FPC)}
 begin
 Lock.Enter;
-buf1:=buf1+GenerateLogString(tabstr+text,o);
+buf1:=buf1+GenerateLogString(IndentStr+text,o);
 Lock.Leave;
 {$ELSE}
 var
@@ -339,7 +343,7 @@ var
   temptext:string;
   a,b:cardinal;   
 begin
-temptext:=GenerateLogString(tabstr+text,o);
+temptext:=GenerateLogString(IndentStr+text,o);
 p:=addr(temptext[1]);
 a:=length(temptext);
 while a<>0 do
@@ -390,12 +394,12 @@ end;
 
 {TAGMultiLog}
 
-procedure TAGMultiLog.SetTabText(const s:string);
+procedure TAGMultiLog.SetIndentText(const s:string);
 var
   i:TAGLog;
 begin
 for i in Logs do
-  i.TabText:=s;
+  i.IndentText:=s;
 end;
 
 constructor TAGMultiLog.Create(Default:TLogsList);
@@ -415,20 +419,20 @@ for i in Logs do
   i.Write(Text,o);
 end;
 
-procedure TAGMultiLog.Tab();
+procedure TAGMultiLog.Indent();
 var
   i:TAGLog;
 begin
 for i in Logs do
-  i.Tab();
+  i.Indent();
 end;
 
-procedure TAGMultiLog.UnTab();
+procedure TAGMultiLog.UnIndent();
 var
   i:TAGLog;
 begin
 for i in Logs do
-  i.UnTab();
+  i.UnIndent();
 end;
 
 destructor TAGMultiLog.Destroy();
