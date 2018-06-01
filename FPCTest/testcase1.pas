@@ -49,7 +49,6 @@ SetLength(s,0);
 MultiLog.Write('Str Test');
 MultiLog.Write('Str+Object Test',self);
 FreeAndNil(MultiLog);
-
 end;
 
 
