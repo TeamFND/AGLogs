@@ -3,7 +3,9 @@ program fpcunitproject1;
 {$mode objfpc}{$H+}
 
 uses
-  Classes, consoletestrunner, TestCase1;
+  Classes,
+  consoletestrunner,
+  TestCase1;
 
 type
 
@@ -11,7 +13,7 @@ type
 
   TMyTestRunner = class(TTestRunner)
   protected
-  // override the protected methods of TTestRunner to customize its behavior
+    // override the protected methods of TTestRunner to customize its behavior
   end;
 
 var

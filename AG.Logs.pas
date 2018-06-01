@@ -2,17 +2,17 @@ unit AG.Logs;
 
 interface
 
-{$IFDEF FPC}
-  {$UNDEF MSWINDOWS}
-{$ENDIF}
+//{$UNDEF MSWINDOWS}
 
 uses
   {$IFDEF MSWINDOWS}{$IFDEF FPC}Windows{$ELSE}Winapi.Windows{$ENDIF},{$ENDIF}
   {$IFDEF FPC}FGL{$ELSE}System.Generics.Collections{$ENDIF},
   {$IFDEF FPC}SysUtils{$ELSE}System.SysUtils{$ENDIF},
   {$IFDEF FPC}Classes{$ELSE}System.Classes{$ENDIF},
-  {$IFDEF FPC}DateUtils{$ELSE}System.DateUtils{$ENDIF},
-  {$IFDEF FPC}SyncObjs{$ELSE}System.SyncObjs{$ENDIF}
+  {$IFDEF FPC}DateUtils{$ELSE}System.DateUtils{$ENDIF}
+  {$IF defined(MSWINDOWS) and not defined(FPC)},
+    {$IFDEF FPC}SyncObjs{$ELSE}System.SyncObjs{$ENDIF}
+  {$ENDIF}
   {$IFNDEF MSWINDOWS}{$IFNDEF FPC},System.IOUtils{$ENDIF}{$ENDIF};
 
 type
@@ -24,46 +24,46 @@ type
     const
       CBaseTab='--------------------------';  
     public
-      class function SisebleWordtoStr(i:word;size:int8):string;static;inline;
-      class function GenerateLogString(s:string;o:TObject=nil):string;static;inline;
+      class function SizeableWordtoStr(i:word;size:int8):string;static;inline;
+      class function GenerateLogString(const s:string;o:TObject=nil):string;static;inline;
       procedure Tab();virtual;
       procedure UnTab();virtual;
-      procedure Write(Text:string;o:TObject=nil);overload;virtual;abstract;
+      procedure Write(const Text:string;o:TObject=nil);overload;virtual;abstract;
       destructor Destroy();override;
   end;
 
   TAGRamLog=class(TAGLog)
     public
-      buf:WideString;
-      constructor Create();overload;
-      procedure Write(Text:string;o:TObject=nil);overload;override;
+      buf:String;
+      constructor Create();
+      procedure Write(const Text:string;o:TObject=nil);overload;override;
   end;
 
   TAGDiskLog=class(TAGLog)
     strict protected
-      {$IFNDEF MSWINDOWS}
-      Stream:TFileStream;//TStream;
-      {$ELSE}
-      buf1:WideString;
+      {$IF defined(MSWINDOWS) and not defined(FPC)} 
+      buf1:String;
       onbuf:boolean;
       LogHandle,ThreadHandle:NativeUInt;
       ThreadID:cardinal;
       Lock:TCriticalSection;
       WantTerminate:Boolean;
+      {$ELSE}         
+      Stream:TStream;
       {$ENDIF}
     public
-      constructor Create(FileName:WideString);overload;
-      {$IFDEF MSWINDOWS}
+      constructor Create(const FileName:String);overload;
+      {$IF defined(MSWINDOWS) and not defined(FPC)}
       procedure Init();stdcall;
       {$ENDIF}
-      procedure Write(Text:string;o:TObject=nil);overload;override;
+      procedure Write(const Text:string;o:TObject=nil);overload;override;
       destructor Destroy();overload;override;
   end;
 
   TAGNullLog=class(TAGLog)
     public
       constructor Create();overload;
-      procedure Write(Text:string;o:TObject=nil);overload;override;
+      procedure Write(const Text:string;o:TObject=nil);overload;override;
   end;
 
   {$IFDEF MSWINDOWS}
@@ -72,7 +72,7 @@ type
       CommandLine:THandle;
     public
       constructor Create(Handele:THandle);overload;
-      procedure Write(Text:string;o:TObject=nil);overload;override;
+      procedure Write(const Text:string;o:TObject=nil);overload;override;
       destructor Destroy();overload;override;
   end;
   {$ENDIF}
@@ -82,7 +82,7 @@ type
       stream:TStream;
     public
       constructor Create(Astream:TStream);overload;
-      procedure Write(Text:string;o:TObject=nil);overload;override;
+      procedure Write(const Text:string;o:TObject=nil);overload;override;
   end;
 
   TAGCallBackLog=class(TAGLog)
@@ -92,7 +92,7 @@ type
         CallBack:TCallBack;
     public
       constructor Create(ACallBack:TCallBack);overload;
-      procedure Write(Text:string;o:TObject=nil);overload;override;
+      procedure Write(const Text:string;o:TObject=nil);overload;override;
   end;
 
   TAGMultiLog=class(TAGLog)
@@ -102,7 +102,7 @@ type
       var
         Logs:TLogsList;
       constructor Create(Default:TLogsList);overload;
-      procedure Write(Text:string;o:TObject=nil);overload;override;
+      procedure Write(const Text:string;o:TObject=nil);overload;override;
       procedure Tab();override;
       procedure UnTab();override;
       destructor Destroy();overload;override;
@@ -118,7 +118,7 @@ begin
 Self.Write(CBaseTab+'Logging init-'+CBaseTab);
 end;
 
-class function TAGLog.SisebleWordtoStr(i:word;size:int8):string;
+class function TAGLog.SizeableWordtoStr(i:word;size:int8):string;
 begin
   Result:=IntToStr(i);
   size:=size-Length(Result);
@@ -131,7 +131,7 @@ begin
   end;
 end;
 
-class function TAGLog.GenerateLogString(s:string;o:TObject=nil):string;
+class function TAGLog.GenerateLogString(const  s:string;o:TObject=nil):string;
 var
   D:TDateTime;
 begin
@@ -144,10 +144,10 @@ if o<>nil then
   {$ENDIF}
 else
   Result:='';
-Result:='['+Siseblewordtostr(DayOfTheMonth(D),2)+'.'+Siseblewordtostr(MonthOfTheYear(D),2)+'.'+
-  Siseblewordtostr(YearOf(D),4)+' '+Siseblewordtostr(HourOfTheDay(D),2)+':'+
-  Siseblewordtostr(MinuteOfTheHour(D),2)+':'+Siseblewordtostr(SecondOfTheMinute(D),2)+'.'
-  +Siseblewordtostr(MilliSecondOfTheSecond(D),3)+'] '+Result+s+sLineBreak;
+Result:='['+SizeableWordtoStr(DayOfTheMonth(D),2)+'.'+SizeableWordtoStr(MonthOfTheYear(D),2)+'.'+
+  SizeableWordtoStr(YearOf(D),4)+' '+SizeableWordtoStr(HourOfTheDay(D),2)+':'+
+  SizeableWordtoStr(MinuteOfTheHour(D),2)+':'+SizeableWordtoStr(SecondOfTheMinute(D),2)+'.'
+  +SizeableWordtoStr(MilliSecondOfTheSecond(D),3)+'] '+Result+s+sLineBreak;
 end;
 
 procedure TAGLog.Tab();
@@ -158,6 +158,8 @@ end;
 
 procedure TAGLog.UnTab();
 begin
+if tabs=0 then
+  Exit;
 dec(tabs);
 Delete(tabstr,1,2);
 end;
@@ -176,13 +178,13 @@ tabstr:='';
 inherited Create;
 end;
 
-procedure TAGRamLog.Write(Text:string;o:TObject=nil);
+procedure TAGRamLog.Write(const Text:string;o:TObject=nil);
 begin
 buf:=buf+GenerateLogString(tabstr+Text,o);
 end;
 
-constructor TAGDiskLog.Create(FileName:WideString);
-{$IFDEF MSWINDOWS}
+constructor TAGDiskLog.Create(const FileName:String);
+{$IF defined(MSWINDOWS) and not defined(FPC)}
 begin
   Lock:=TCriticalSection.Create;
   WantTerminate:=False;
@@ -199,7 +201,7 @@ begin
   {$IFDEF FPC}
     Stream:=nil;
     try
-      Stream:=TFileStream.Create('test2.log',fmOpenRead);
+      Stream:=TFileStream.Create('test2.log',fmOpenRead+fmShareDenyNone);
       SetLength(s,Stream.Size);
       Stream.Read(s[0],Stream.Size);
     except
@@ -220,7 +222,7 @@ begin
 inherited Create;
 end;
 
-{$IFDEF MSWINDOWS}
+{$IF defined(MSWINDOWS) and not defined(FPC)}
 procedure TAGDiskLog.Init();stdcall;
 var
   n:cardinal;
@@ -254,8 +256,8 @@ end;
 end;
 {$ENDIF}
 
-procedure TAGDiskLog.Write(Text:string;o:TObject=nil);
-{$IFDEF MSWINDOWS}
+procedure TAGDiskLog.Write(const Text:string;o:TObject=nil);
+{$IF defined(MSWINDOWS) and not defined(FPC)}
 begin
 Lock.Enter;
 buf1:=buf1+GenerateLogString(tabstr+text,o);
@@ -276,7 +278,7 @@ end;
 destructor TAGDiskLog.Destroy();
 begin
 inherited;
-{$IFDEF MSWINDOWS}
+{$IF defined(MSWINDOWS) and not defined(FPC)}
 WantTerminate:=True;
 While WantTerminate do
   sleep(0);
@@ -294,7 +296,7 @@ begin
 inherited;
 end;
 
-procedure TAGNullLog.Write(Text:string;o:TObject=nil);
+procedure TAGNullLog.Write(const Text:string;o:TObject=nil);
 begin
 end;
 
@@ -307,18 +309,19 @@ CommandLine:=Handele;
 inherited Create;
 end;
 
-procedure TAGCommandLineLog.Write(Text:string;o:TObject=nil);
+procedure TAGCommandLineLog.Write(const Text:string;o:TObject=nil);
 var
-  p:PWideChar;
+  p:PChar;
+  temptext:string;
   a,b:cardinal;   
 begin
-Text:=GenerateLogString(tabstr+text,o);
-p:=addr(Text[1]);
-a:=length(Text);
+temptext:=GenerateLogString(tabstr+text,o);
+p:=addr(temptext[1]);
+a:=length(temptext);
 while a<>0 do
 begin
   b:=0;
-  WriteConsoleW(CommandLine,p,a,b,nil);
+  {$IFDEF FPC}WriteConsoleA(CommandLine,p,a,b,nil);{$ELSE}WriteConsoleW(CommandLine,p,a,b,nil);{$ENDIF}
   inc(p,b);
   dec(a,b);
 end;
@@ -327,6 +330,7 @@ end;
 destructor TAGCommandLineLog.Destroy();
 begin
 inherited;
+if CommandLine<>GetStdHandle(STD_OUTPUT_HANDLE) then
 CloseHandle(CommandLine);
 end;
 {$ENDIF}
@@ -339,7 +343,7 @@ stream:=Astream;
 inherited Create;
 end;
 
-procedure TAGStreamLog.Write(Text:string;o:TObject=nil);
+procedure TAGStreamLog.Write(const Text:string;o:TObject=nil);
 var
   s:string;
 begin
@@ -355,7 +359,7 @@ CallBack:=ACallBack;
 inherited Create;
 end;
 
-procedure TAGCallBackLog.Write(Text:string;o:TObject=nil);
+procedure TAGCallBackLog.Write(const Text:string;o:TObject=nil);
 begin
 CallBack(GenerateLogString(Text,o));
 end;
@@ -371,7 +375,7 @@ else
   Logs:=TLogsList.Create;
 end;
 
-procedure TAGMultiLog.Write(Text:string;o:TObject=nil);
+procedure TAGMultiLog.Write(const Text:string;o:TObject=nil);
 var
   i:TAGLog;
 begin
