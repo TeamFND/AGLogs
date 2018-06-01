@@ -1,7 +1,7 @@
 //****************************************************
-//*Copyright (c) 2018 Artem Gavrilov                 *
-//*Website: https://teamfnd.ru                       *
-//*License: MIT                                      *
+//*Copyright (c) 2018 Artem Gavrilov		     *
+//*Website: https://teamfnd.ru			     *
+//*License: MIT 				     *
 //*Donate: https://money.yandex.ru/to/410014959153552*
 //****************************************************
 unit AG.Logs;
@@ -58,14 +58,14 @@ type
       ThreadID:cardinal;
       Lock:TCriticalSection;
       WantTerminate:Boolean;
-      {$ELSE}         
+      {$ELSE}	      
       Stream:TStream;
       {$ENDIF}
-    public
-      constructor Create(const FileName:String);overload;
       {$IF defined(MSWINDOWS) and not defined(FPC)}
       procedure Init();stdcall;
       {$ENDIF}
+    public
+      constructor Create(const FileName:String);overload;
       procedure Write(const Text:string;o:TObject=nil);overload;override;
       destructor Destroy();overload;override;
   end;
@@ -99,7 +99,7 @@ type
     strict protected type
       TCallBack={$IFNDEF FPC}reference to{$ENDIF}procedure(s:string);
       var
-        CallBack:TCallBack;
+	CallBack:TCallBack;
     public
       constructor Create(ACallBack:TCallBack);overload;
       procedure Write(const Text:string;o:TObject=nil);overload;override;
@@ -110,10 +110,10 @@ type
       procedure SetIndentText(const s:string);override;
     public
       type
-        TLogsList={$IFDEF FPC}specialize TFPGList<TAGLog>{$ELSE}TList<TAGLog>{$ENDIF};
+	TLogsList={$IFDEF FPC}specialize TFPGList<TAGLog>{$ELSE}TList<TAGLog>{$ENDIF};
       var
-        Logs:TLogsList;
-      constructor Create(Default:TLogsList);overload;
+	Logs:TLogsList;
+      constructor Create(ALogs:TLogsList=nil);overload;
       procedure Write(const Text:string;o:TObject=nil);overload;override;
       procedure Indent();override;
       procedure UnIndent();override;
@@ -406,11 +406,11 @@ for i in Logs do
   i.IndentText:=s;
 end;
 
-constructor TAGMultiLog.Create(Default:TLogsList);
+constructor TAGMultiLog.Create(ALogs:TLogsList=nil);
 begin
 //inherited Create;
 if Default<>nil then
-  Logs:=Default
+  Logs:=ALogs
 else
   Logs:=TLogsList.Create;
 end;
