@@ -1,7 +1,10 @@
+//****************************************************
+//*Copyright (c) 2018 Artem Gavrilov                 *
+//*Website: https://teamfnd.ru                       *
+//*License: MIT                                      *
+//*Donate: https://money.yandex.ru/to/410014959153552*
+//****************************************************
 unit AG.Logs;
-//Copyright (c) 2018 Artem Gavrilov
-//License:MIT
-//Site:https://teamfnd.ru
 
 interface
 
