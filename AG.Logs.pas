@@ -1,5 +1,6 @@
 unit AG.Logs;
-//Copyright by Artem Gavrilov.
+//Copyright (c) 2018 Artem Gavrilov
+//License:MIT
 //Site:https://teamfnd.ru
 
 interface
