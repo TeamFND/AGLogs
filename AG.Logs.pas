@@ -18,7 +18,7 @@ uses
 type
   TAGLog=class abstract
     strict protected
-      OneTabStr:string;
+      FTabText:string;
       tabs:cardinal;
       tabstr:string;
       constructor Create();
@@ -33,7 +33,7 @@ type
       procedure UnTab();virtual;
       procedure Write(const Text:string;o:TObject=nil);overload;virtual;abstract;
       destructor Destroy();override;
-      property TabText:string read OneTabStr write SetTabText;
+      property TabText:string read FTabText write SetTabText;
   end;
 
   TAGRamLog=class(TAGLog)
@@ -124,7 +124,7 @@ constructor TAGLog.Create();
 begin
 Self.Write(CBaseTab+'Logging init-'+CBaseTab);
 TabRegen;
-OneTabStr:=DefOneTabStr;
+FTabText:=DefOneTabStr;
 end;
 
 class function TAGLog.SizeableWordtoStr(i:word;size:int8):string;
@@ -179,12 +179,12 @@ var
 begin
 tabstr:='';
 for i:=1 to tabs do
-  tabstr:=tabstr+OneTabStr;
+  tabstr:=tabstr+FTabText;
 end;
 
 procedure TAGLog.SetTabText(const s:string);
 begin
-OneTabStr:=s;
+FTabText:=s;
 TabRegen;
 end;
 
