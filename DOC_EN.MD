@@ -1,7 +1,7 @@
 ﻿﻿
 # Description of AG.Logs library
 
-## TAGLog
+## TAGLog = class abstract
 
 It is abstract class for using in any parts of code.
   
@@ -9,26 +9,26 @@ It is abstract class for using in any parts of code.
 
 + #### class function GenerateLogString(const s:string;o:TObject=nil):string;static;
 
-	Function for add time and object information (if o is not nil) to string
+	Function for add time and object information (if o is not nil) to string.
 
 + #### procedure Indent();
 
-	Procedure for add ident to all next strings.
+	Procedure for add indent to all next strings.
 
 + #### procedure UnIndent();
 
-	Procedure for remove ident from all next strings.
+	Procedure for remove indent from all next strings.
 
 + #### procedure Write(const Text:string;o:TObject=nil);
 
-	Write string in log.
+	Procedure for writing string in log.
 
 + #### property IndentText:string;
 
-	String what using as indent symbol in log string. Default is DefOneTabStr const(two spaces).
+	String what using as indent symbol in logs. Default value is DefOneTabStr const(two spaces).
 
 ********************************************
-## TAGRamLog
+## TAGRamLog = class(TAGLog)
 
 Write log in RAM buffer.
 
@@ -39,7 +39,7 @@ Write log in RAM buffer.
 	Buffer when you can find log.
 
 ********************************************
-## TAGDiskLog
+## TAGDiskLog = class(TAGLog)
 
 File log.
 
@@ -50,12 +50,14 @@ File log.
 	Use to create log from file name. If file not exist if will created.
 
 ********************************************
-## TAGNullLog
+## TAGNullLog = class(TAGLog)
+
+Doesn't do anything.
 
 Use if you don't need log, but don't want del logging from code.
 
 ********************************************
-## TAGCommandLineLog
+## TAGCommandLineLog = class(TAGLog)
 
 Write log to command line.
 
@@ -68,18 +70,18 @@ Write log to command line.
 	`Log:=TAGCommandLineLog.Create(GetStdHandle(STD_OUTPUT_HANDLE));`
 
 ********************************************
-## TAGStreamLog
+## TAGStreamLog = class(TAGLog)
 
-Write log to pascal stream.
+Write log to pascal stream (TStream).
 
 ### public metods & propertys
 
 + #### constructor Create(Astream:TStream);
 
-	Use to create log from pascal stream.
+	Use to create log from pascal stream (TStream).
 
 ********************************************
-## TAGCallBackLog
+## TAGCallBackLog = class(TAGLog)
 
 Write log to callback.
 
@@ -96,9 +98,9 @@ Write log to callback.
 	Use to create log from callback.
 
 ********************************************
-## TAGMultiLog
+## TAGMultiLog = class(TAGLog)
 
-Write all to other logs.
+Writes several logs.
 
 ### public metods & propertys
       
@@ -110,8 +112,4 @@ Write all to other logs.
 
 + #### constructor Create(ALogs:TLogsList);
 
-	Use to create log from TLogsList. If ALogs is nil.
-
-
-
-
+	Use to create log from TLogsList. If ALogs is nil will used empty list.

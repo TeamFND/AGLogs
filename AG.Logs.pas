@@ -409,7 +409,7 @@ end;
 constructor TAGMultiLog.Create(ALogs:TLogsList=nil);
 begin
 //inherited Create;
-if Default<>nil then
+if ALogs<>nil then
   Logs:=ALogs
 else
   Logs:=TLogsList.Create;

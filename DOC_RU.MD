@@ -1,117 +1,115 @@
 ﻿﻿
-# Description of AG.Logs library
+# Описание of AG.Logs library
 
-## TAGLog
+## TAGLog = class abstract
 
-It is abstract class for using in any parts of code.
+Это абстрактный класс для использования в любых местах кода.
   
-### public metods & propertys
+### Публичные методы и свойства
 
 + #### class function GenerateLogString(const s:string;o:TObject=nil):string;static;
 
-	Function for add time and object information (if o is not nil) to string
+	Функция для добавления времени и информации об объекте (если o не nil) в строку.
 
 + #### procedure Indent();
 
-	Procedure for add ident to all next strings.
+	Процедура для добавления отступа ко всем следующим строкам.
 
 + #### procedure UnIndent();
 
-	Procedure for remove ident from all next strings.
+	Процедура для удаления отступа из всех следующих строк.
 
 + #### procedure Write(const Text:string;o:TObject=nil);
 
-	Write string in log.
+	Запись строки в лог.
 
 + #### property IndentText:string;
 
-	String what using as indent symbol in log string. Default is DefOneTabStr const(two spaces).
+	Строка, которая используется как символ отступа в логах. Значение по умолчанию рано константе DefOneTabStr(два пробела).
 
 ********************************************
-## TAGRamLog
+## TAGRamLog = class(TAGLog)
 
-Write log in RAM buffer.
+Пишет лог в бувер в опереативной памяти.
 
-### public metods & propertys
+### Публичные методы и свойства
 
 + #### buf:String;
 
-	Buffer when you can find log.
+	Буфер куда ведётся логирование.
 
 ********************************************
-## TAGDiskLog
+## TAGDiskLog = class(TAGLog)
 
-File log.
+Файловый лог.
 
-### public metods & propertys
+### Публичные методы и свойства
 
 + #### constructor Create(const FileName:String);
 
-	Use to create log from file name. If file not exist if will created.
+	Используйте чтобы создать лог по имени вайла. If file not exist if will created.
 
 ********************************************
-## TAGNullLog
+## TAGNullLog = class(TAGLog)
 
-Use if you don't need log, but don't want del logging from code.
+Не делает ничего.
+
+Используйте если вы не нуждатесь в логе, но не хотоите удалять логироание из кода.
 
 ********************************************
-## TAGCommandLineLog
+## TAGCommandLineLog = class(TAGLog)
 
-Write log to command line.
+Пишет лог в командную строку.
 
-### public metods & propertys
+### Публичные методы и свойства
 
 + #### constructor Create(Handele:THandle);
 
-	Use to create log from winapi handle. Use as:
+	Используйте чтгобы создать лог по winapi handle'у. Пример использования:
 
 	`Log:=TAGCommandLineLog.Create(GetStdHandle(STD_OUTPUT_HANDLE));`
 
 ********************************************
-## TAGStreamLog
+## TAGStreamLog = class(TAGLog)
 
-Write log to pascal stream.
+Пишел лог в поток паскаля (TStream).
 
-### public metods & propertys
+### Публичные методы и свойства
 
 + #### constructor Create(Astream:TStream);
 
-	Use to create log from pascal stream.
+	Используйте чтобы создать лог из потока паскаля (TStream).
 
 ********************************************
-## TAGCallBackLog
+## TAGCallBackLog = class(TAGLog)
 
-Write log to callback.
+Пишел лог в callback-процедуру (TStream).
 
-### public metods & propertys
+### Публичные методы и свойства
       
 + #### TCallBack
 
-	Type. In delphi it is anonimus procedure, in free pascal - standart procedure. Declaration:
+	Тип данных. В delphi это анонимная процедура, во free pascal'е - обычная процедура. Объявление:
 
 	`TCallBack={$IFNDEF FPC}reference to{$ENDIF}procedure(s:string);`
 
 + #### constructor Create(ACallBack:TCallBack);
 
-	Use to create log from callback.
+	Используйте чтобы создать лог из callback'а.
 
 ********************************************
-## TAGMultiLog
+## TAGMultiLog = class(TAGLog)
 
-Write all to other logs.
+Пишет несколько логов.
 
-### public metods & propertys
-      
+### Публичные методы и свойства
+
 + #### TLogsList
 
-	Type for list of logs. In delphi it is `System.Generics.Collections.TList`, in free pascal - `FGL.TFPGList`. Declaration:
+	Тип для списка логов. В delphi это `System.Generics.Collections.TList`, во free pascal'е - `FGL.TFPGList`. Объявление:
 
 	`TLogsList={$IFDEF FPC}specialize TFPGList<TAGLog>{$ELSE}TList<TAGLog>{$ENDIF}`
 
 + #### constructor Create(ALogs:TLogsList);
 
-	Use to create log from TLogsList. If ALogs is nil.
-
-
-
-
+	Используйте чтобы создать лог из TLogsList'a. Если ALogs равен nil, будет использоваться пустой список.
