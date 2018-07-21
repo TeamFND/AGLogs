@@ -151,7 +151,7 @@ class function TAGLog.GenerateLogString(const s:string;o:TObject=nil):string;
 var
   D:TDateTime;
 begin
-D:=Time;
+D:=Now;
 if o<>nil then
   {$IFDEF FPC}
     Result:=o.ClassName+'['+IntToStr(o.GetHashCode)+']:'
