@@ -8,7 +8,7 @@ unit AG.Logs;
 
 interface
 
-//{$UNDEF MSWINDOWS}
+{$UNDEF MSWINDOWS}
 
 uses
   {$IFDEF MSWINDOWS}{$IFDEF FPC}Windows{$ELSE}Winapi.Windows{$ENDIF},{$ENDIF}
@@ -27,7 +27,7 @@ type
       FIndentText:string;
       Indents:cardinal;
       IndentStr:string;
-      constructor Create();
+      constructor Create();virtual;
       procedure UpdateIndentStr();
       procedure SetIndentText(const s:string);virtual;
     const
@@ -76,16 +76,15 @@ type
       procedure Write(const Text:string;o:TObject=nil);overload;override;
   end;
 
-  {$IFDEF MSWINDOWS}
   TAGCommandLineLog=class(TAGLog)
     strict protected
-      CommandLine:THandle;
+      {$IFDEF MSWINDOWS}CommandLine:THandle;{$ENDIF}
     public
-      constructor Create(Handele:THandle);overload;
+      constructor Create();overload;override;
+      {$IFDEF MSWINDOWS}constructor Create(Handele:THandle);overload;{$ENDIF}
       procedure Write(const Text:string;o:TObject=nil);overload;override;
       destructor Destroy();overload;override;
   end;
-  {$ENDIF}
 
   TAGStreamLog=class(TAGLog)
     strict protected
@@ -148,7 +147,7 @@ begin
   end;
 end;
 
-class function TAGLog.GenerateLogString(const  s:string;o:TObject=nil):string;
+class function TAGLog.GenerateLogString(const s:string;o:TObject=nil):string;
 var
   D:TDateTime;
 begin
@@ -298,7 +297,7 @@ Lock.Leave;
 var
   s:string;
 begin
-s:=GenerateLogString(tabstr+text,o);
+s:=GenerateLogString(IndentStr+text,o);
   {$IFDEF FPC}
     Stream.Write(PChar(s)^,Length(s)*CharSize);
   {$ELSE}
@@ -334,18 +333,28 @@ end;
 
 {TAGCommandLineLog}
 
+constructor TAGCommandLineLog.Create();
+begin
+{$IFDEF MSWINDOWS}Self.Create(GetStdHandle(STD_OUTPUT_HANDLE));
+{$ELSE}
+inherited;
+{$ENDIF}
+end;
+
 {$IFDEF MSWINDOWS}
 constructor TAGCommandLineLog.Create(Handele:THandle);
 begin
 CommandLine:=Handele;
 inherited Create;
 end;
+{$ENDIF}
 
 procedure TAGCommandLineLog.Write(const Text:string;o:TObject=nil);
+{$IFDEF MSWINDOWS}
 var
   p:PChar;
   temptext:string;
-  a,b:cardinal;   
+  a,b:cardinal;
 begin
 temptext:=GenerateLogString(IndentStr+text,o);
 p:=addr(temptext[1]);
@@ -353,19 +362,28 @@ a:=length(temptext);
 while a<>0 do
 begin
   b:=0;
-  {$IFDEF FPC}WriteConsoleA(CommandLine,p,a,b,nil);{$ELSE}WriteConsoleW(CommandLine,p,a,b,nil);{$ENDIF}
+    {$IFDEF FPC}
+      WriteConsoleA(CommandLine,p,a,b,nil);
+    {$ELSE}
+      WriteConsoleW(CommandLine,p,a,b,nil);
+    {$ENDIF}
   inc(p,b);
   dec(a,b);
 end;
+{$ELSE}
+begin
+System.Write(GenerateLogString(IndentStr+text,o));
+{$ENDIF}
 end;
 
 destructor TAGCommandLineLog.Destroy();
 begin
 inherited;
+{$IFDEF MSWINDOWS}
 if CommandLine<>GetStdHandle(STD_OUTPUT_HANDLE) then
 CloseHandle(CommandLine);
-end;
 {$ENDIF}
+end;
 
 {TAGStreamLog}
 
