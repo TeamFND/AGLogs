@@ -63,9 +63,13 @@ Write log to command line.
 
 ### public metods & propertys
 
++ #### constructor Create();
+
+	Use to create log to default commandline.
+
 + #### constructor Create(Handele:THandle);
 
-	Use to create log from winapi handle. Use as:
+	Use to create log from winapi handle (Windows only). Use as:
 
 	`Log:=TAGCommandLineLog.Create(GetStdHandle(STD_OUTPUT_HANDLE));`
 

@@ -63,9 +63,13 @@
 
 ### Публичные методы и свойства
 
++ #### constructor Create();
+
+        Используйте чтобы создать лог в основную коммандную сроку.   
+
 + #### constructor Create(Handele:THandle);
 
-	Используйте чтгобы создать лог по winapi handle'у. Пример использования:
+	Используйте чтобы создать лог по winapi handle'у (Только для Windows). Пример использования:
 
 	`Log:=TAGCommandLineLog.Create(GetStdHandle(STD_OUTPUT_HANDLE));`
 
