@@ -1,4 +1,4 @@
-Library of classes to log to different places: to file, to memory, to command-line (Windows only).
+Library of classes to log to different places: to file, to memory, to command-line.
 
 Supported Delphi and FPC.
 
